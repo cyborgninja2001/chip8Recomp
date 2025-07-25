@@ -14,7 +14,8 @@ a .c file named program.c will be create on folder output/.
 
 then you can normally compile and run that file using sdl2. (you'll need to install it first then add flag -lSDL2 when compiling)
 
-links used:
+# links used:
+
 chip8 static recompilation using perl
 https://greg-kennedy.com/wordpress/2024/05/26/static-recompilation-of-chip-8-programs/
 
