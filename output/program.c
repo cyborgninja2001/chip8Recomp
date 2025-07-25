@@ -262,6 +262,8 @@ _228:
 	goto _228;
 	update_timers();
 	SDL_Delay(16);
-_22A:
+SDL_DestroyRenderer(renderer);
+SDL_DestroyWindow(window);
+SDL_Quit();
 	return 0;
 }

@@ -163,8 +163,8 @@ int main(int argc, char* argv[]) {
     fprintf(f, "uint8_t x_cord;\n");
     fprintf(f, "uint8_t y_cord;\n\n");
 
-
-    while (pc <= 0x230) { // TODO: fixme [only works for ibm.ch8]
+// fprintf(f, "\t\n");
+    while (pc <= 0x229) { // TODO: fixme [only works for ibm.ch8]
         uint16_t opcode = (ram[pc] << 8) | ram[pc+1];
         nnn = opcode & 0xFFF;
         n = opcode & 0xF;
@@ -180,12 +180,28 @@ int main(int argc, char* argv[]) {
                     case 0x00E0: { // CLS
                         fprintf(f, "\tCLS()\n");
                     } break;
-                    case 0x00EE: { printf("0x00EE\n"); exit(-1); } break;
-                    default: { printf("0x0nnn\n"); exit(-1); } break;
+                    case 0x00EE: { // RET
+                        fprintf(f, "\tRET();\n");
+                    } break;
+                    default: { // SYS addr
+                        fprintf(f, "\tgoto _%03X;\n", nnn);
+                    } break;
                 }
             } break;
             case 0x1: { // JP addr
                 fprintf(f, "\tgoto _%03X;\n", nnn);
+            } break;
+            case 0x2: { // CALL addr
+                fprintf(f, "\tCALL(_%03X);\n", nnn);
+            } break;
+            case 0x3: { // SE Vx, byte
+                fprintf(f, "\tif (V[0x%02X] == 0x%02X) goto _%03X;\n", x, kk, pc+2);
+            } break;
+            case 0x4: { // SNE Vx, byte
+                fprintf(f, "\tif (V[0x%02X] != 0x%02X) goto _%03X;\n", x, kk, pc+2);
+            } break;
+            case 0x5: { // SE Vx, Vy
+                fprintf(f, "\tif (V[0x%02X] == V[0x%02X]) goto _%03X;\n", x, y, pc+2);
             } break;
             case 0x6: { // LD Vx, byte
                 fprintf(f, "\tV[0x%02X] = 0x%02X;\n", x, kk);
@@ -193,8 +209,56 @@ int main(int argc, char* argv[]) {
             case 0x7: { // ADD Vx, byte
                 fprintf(f, "\tV[0x%02X] += 0x%02X;\n", x, kk);
             } break;
+            case 0x8: {
+                switch(n) {
+                    case 0x0: { // LD Vx, Vy
+                        fprintf(f, "\tV[0x%02X] = V[0x%02X];\n", x, y);
+                    } break;
+                    case 0x1: { // OR Vx, Vy
+                        fprintf(f, "\tV[0x%02X] |= V[0x%02X];\n", x, y);
+                    } break;
+                    case 0x2: { // AND Vx, Vy
+                        fprintf(f, "\tV[0x%02X] &= V[0x%02X];\n", x, y);
+                    } break;
+                    case 0x3: { // XOR Vx, Vy
+                        fprintf(f, "\tV[0x%02X] ^= V[0x%02X];\n", x, y);
+                    } break;
+                    case 0x4: { // ADD Vx, Vy
+                        fprintf(f, "\tV[0x%02X] += V[0x%02X];\n", x, y);
+                        fprintf(f, "\tif (V[0x%02X] > 255) { V[0xF] = 1; } else { V[0xF] = 0; }\n", x);
+                    } break;
+                    case 0x5: { // SUB Vx, Vy
+                        fprintf(f, "\tif (V[0x%02X] > V[0x%02X]) { V[0xF] = 1; } else { V[0xF] = 0; }\n", x, y);
+                        fprintf(f, "\tV[0x%02X] -= V[0x%02X];\n", x, y);
+                    } break;
+                    case 0x6: { // SHR Vx {, Vy}
+                        fprintf(f, "\tV[0xF] = V[0x%02X] & 1;\n", x);
+                        fprintf(f, "\tV[0x%02X] >>= 1;\n", x);
+                    } break;
+                    case 0x7: { // SUBN Vx, Vy
+                        fprintf(f, "\tif (V[0x%02X] > V[0x%02X]) { V[0xF] = 1; } else { V[0xF] = 0; }\n", y, x);
+                        fprintf(f, "\tV[0x%02X] = V[0x%02X] - V[0x%02X];\n", x, y, x);
+                    } break;
+                    case 0xE: { // SHL Vx {, Vy}
+                        fprintf(f, "\tV[0xF] = (V[0x%02X] & 0x80) >> 7;\n", x);
+                        fprintf(f, "\tV[0x%02X] <<= 1;\n", x);
+                    } break;
+                }
+            } break;
+            case  0x9: { // SNE Vx, Vy
+                fprintf(f, "\tif (V[0x%02X] != V[0x%02X]) goto _%03X;\n", x, y, pc+2);
+            } break;
             case 0xA: { // LD I, addr
                 fprintf(f, "\tI = 0x%03X;\n", nnn);
+            } break;
+            case 0xB: { // JP V0, addr (FIXME)
+                fprintf(f, "\tswitch(V[0]) {\n");
+                fprintf(f, "\t\tcase 0: goto _500;\n");
+                fprintf(f, "\t\tdefault: { printf(\"ERROR: V[0] = ;\"); exit(-1); }\n");
+                fprintf(f, "\t}\n");
+            } break;
+            case 0xC: { // RND Vx, byte (FIXME: we need to generate a random value)
+                fprintf(f, "\tV[0x%02X] = 0x0F + %02X;\n", x, kk); // just for now we always generate 0x0F
             } break;
             case 0xD: { // DRW Vx, Vy, nibble
                 fprintf(f, "\tx_cord = V[0x%02X] & 63;\n", x);
@@ -212,6 +276,53 @@ int main(int argc, char* argv[]) {
                 fprintf(f, "\t\t}\n");
                 fprintf(f, "\t}\n");
                 fprintf(f, "\tdraw_screen();\n");
+            } break;
+            case 0xE: {
+                switch(kk) {
+                    case 0x9E: {
+                        // TODO
+                    } break;
+                    case 0xA1: { // FIXME (we always jump because we don't have input)
+                        fprintf(f, "\tgoto _%03X;\n", pc+2);
+                    } break;
+                }
+            } break;
+            case 0xF: {
+                switch(kk) {
+                    case 0x07: { // LD Vx, DT
+                        fprintf(f, "\tV[0x%02X] = delay_timer;\n", x);
+                    } break;
+                    case 0x0A: { // LD Vx, K (FIXME) we don't support keyboard yet
+                        fprintf(f, "\tgoto _%03X;\n", pc-2); // we stay on an infinite loop
+                    } break;
+                    case 0x15: { // LD DT, Vx
+                        fprintf(f, "\tdelay_timer = V[0x%02X];\n", x);
+                    } break;
+                    case 0x18: { // LD ST, Vx
+                        fprintf(f, "\tsound_timer = V[0x%02X];\n", x);
+                    } break;
+                    case 0x1E: { // ADD I, Vx
+                        fprintf(f, "\tI += V[0x%02X];\n", x);
+                    } break;
+                    case 0x29: { // LD F, Vx
+                        printf("TODO: LD F, Vx\n");
+                        exit(-1);
+                    } break;
+                    case 0x33: { // LD B, Vx
+                        printf("LD B, Vx\n");
+                        exit(-1);
+                    }
+                    case 0x55: { // LD [I], Vx
+                        fprintf(f, "\tfor (int i = 0; i < 16; i++) {\n");
+                        fprintf(f, "\t\tram[I + i] = V[i];\n");
+                        fprintf(f, "\t}\n");
+                    } break;
+                    case 0x65: { // LD Vx, [I]
+                        fprintf(f, "\tfor (int i = 0; i < 16; i++) {\n");
+                        fprintf(f, "\t\tV[i] = ram[I + i];\n");
+                        fprintf(f, "\t}\n");
+                    } break;
+                }
             } break;
             default: {
                 printf("[ERROR]: opcode not yet mapped 0x%01Xxx%01X\n", (opcode & 0xF000) >> 12, n);
