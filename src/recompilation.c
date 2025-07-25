@@ -47,9 +47,10 @@ int main(int argc, char* argv[]) {
     fclose(rom);
     memcpy(ram + 0x050, font, sizeof(font));
 
-
-    FILE* f = fopen("ibm.c", "w");
+    FILE* f = fopen("output/program.c", "w");
     if (f == NULL) { printf("[ERROR]: could not create .c file\n"); exit(-1); }
+
+    fprintf(f, "// %s\n\n", argv[1]);
 
     // libraries
     fprintf(f, "#include <stdio.h>\n");
@@ -155,7 +156,7 @@ int main(int argc, char* argv[]) {
 
     // initialize SDL
     fprintf(f, "\tSDL_Init(SDL_INIT_VIDEO);\n");
-    fprintf(f, "\twindow = SDL_CreateWindow(\"ibm logo\", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);\n");
+    fprintf(f, "\twindow = SDL_CreateWindow(\"program\", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);\n");
     fprintf(f, "\trenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);\n\n");
     fprintf(f, "SDL_Event event;\n");
     // aux variables for display

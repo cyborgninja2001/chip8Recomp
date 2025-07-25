@@ -1,3 +1,5 @@
+// roms/ibm.ch8
+
 #include <stdio.h>
 #include <setjmp.h>
 #include <stdint.h>
@@ -77,7 +79,7 @@ last_timer_tick = SDL_GetTicks();
 	memcpy(ram + 0x050, font, sizeof(font));
 	memset(display, 0, sizeof(display));
 
-	FILE* f = fopen("ibm.ch8", "r");
+	FILE* f = fopen("roms/ibm.ch8", "r");
 	fseek(f, 0, SEEK_END);
 	int rom_size = ftell(f);
 	rewind(f);
@@ -85,7 +87,7 @@ last_timer_tick = SDL_GetTicks();
 	fclose(f);
 
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("ibm logo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);
+	window = SDL_CreateWindow("program", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH * SCALE, WINDOW_HEIGHT * SCALE, 0);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 SDL_Event event;

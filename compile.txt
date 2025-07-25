@@ -1,1 +1,7 @@
 gcc src/recompilation.c -o main
+
+./main "roms/ibm.ch8"
+
+gcc output/program.c -o program -lSDL2
+
+./program
