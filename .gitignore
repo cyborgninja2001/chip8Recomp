@@ -1,4 +1,5 @@
 *.ch8
 *.exe
 *.txt
+*.Identifier
 ibm.c
